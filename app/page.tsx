@@ -73,7 +73,7 @@ export default function Home() {
           <Reveal>
             <div className="section-head">
               <h2>本周主推</h2>
-              <span className="mono">Featured — No.001</span>
+              <span className="mono">Featured — {featuredPost.title.slice(0, 20)}...</span>
             </div>
           </Reveal>
           <Reveal delay={120}>
@@ -85,7 +85,7 @@ export default function Home() {
                   {featuredPost.category} · {featuredPost.date} · 约 {featuredPost.minutes} 分钟
                 </p>
                 <h3 className="featured-title">
-                  把早晨过得<span className="hl hl-mustard">慢一点</span>， 是一种温柔的抵抗
+                  {featuredPost.title}
                 </h3>
                 <p className="featured-excerpt">{featuredPost.excerpt}</p>
                 <div className="featured-meta">

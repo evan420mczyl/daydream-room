@@ -23,27 +23,16 @@ export default function ThemeToggle() {
     document.documentElement.setAttribute("data-theme", next);
   };
 
-  const getLabel = () => {
-    switch (theme) {
-      case "glass":
-        return "Glass";
-      case "vision":
-        return "Vision";
-      default:
-        return "经典";
-    }
-  };
-
   return (
     <button
       type="button"
       className="theme-toggle"
       onClick={cycleTheme}
-      aria-label={`切换到${getLabel()}风格`}
-      title={`切换到${getLabel()}风格`}
+      aria-label="切换风格"
+      title="切换风格"
     >
       <span className="theme-toggle__label mono">
-        {getLabel()}
+        换形像
       </span>
       <span className="theme-toggle__track">
         <span className="theme-toggle__thumb" />

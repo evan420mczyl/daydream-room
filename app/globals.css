@@ -878,13 +878,14 @@ html.is-loading .hero-doll-3 {
   position: relative;
   display: grid;
   grid-template-columns: 3.2rem minmax(0, 1fr) auto auto 2.4rem;
-  align-items: baseline;
+  align-items: center;
   gap: clamp(1rem, 3vw, 2.4rem);
   padding-block: clamp(1.8rem, 3.4vw, 2.6rem);
+  padding-inline: clamp(1.2rem, 3vw, 2rem);
   border-bottom: 1px solid var(--hairline);
-  transition: padding-left 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: padding-left 0.4s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease;
 }
-.post-row:hover { padding-left: 1.2rem; }
+.post-row:hover { padding-left: 1.8rem; background: rgba(125, 125, 125, 0.03); }
 
 .post-row .num {
   font-family: var(--mono);
