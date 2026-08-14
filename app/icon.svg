@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- 纸底 + 珊瑚星星（沿用站点 StickerStar 的路径）+ 芥末小点 -->
+  <rect width="64" height="64" rx="14" fill="#faf7f1"/>
+  <path
+    d="M12 2 L14.4 8.6 L21.5 9.3 L16.2 13.8 L17.8 20.7 L12 17 L6.2 20.7 L7.8 13.8 L2.5 9.3 L9.6 8.6 Z"
+    transform="translate(4.8 4.8) scale(2.27)"
+    fill="#FF6A55"
+  />
+  <circle cx="50" cy="50" r="5" fill="#F0B23E"/>
+</svg>

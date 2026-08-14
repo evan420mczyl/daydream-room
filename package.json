@@ -1,0 +1,39 @@
+{
+  "name": "daydream-room",
+  "version": "0.1.0",
+  "description": "白日梦陈列室 — 一个关于随笔、设计、手帐与漫游的个人博客",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/evan420mczyl/daydream-room.git"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@fontsource-variable/fraunces": "^5.2.5",
+    "@fontsource/noto-sans-sc": "^5.2.5",
+    "@fontsource/noto-serif-sc": "^5.2.5",
+    "@fontsource/space-mono": "^5.2.5",
+    "next": "^15.3.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "three": "^0.175.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/three": "^0.175.0",
+    "playwright": "^1.61.1",
+    "sharp": "^0.35.3",
+    "typescript": "^5.8.0"
+  },
+  "overrides": {
+    "sharp": "^0.35.3",
+    "postcss": "^8.5.26",
+    "nanoid": "^3.3.18"
+  }
+}
