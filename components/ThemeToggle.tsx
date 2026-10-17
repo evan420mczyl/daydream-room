@@ -2,43 +2,51 @@
 
 import { useEffect, useState } from "react";
 
-type Theme = "original" | "glass" | "vision";
+type Theme = "light" | "dark" | "glass";
 
-const themes: Theme[] = ["original", "glass", "vision"];
+const THEME_ORDER: Theme[] = ["light", "dark", "glass"];
 
-const labels: Record<Theme, string> = {
-  original: "原始",
+const THEME_LABELS: Record<Theme, string> = {
+  light: "浅色",
+  dark: "深色",
   glass: "玻璃",
-  vision: "未来",
 };
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("original");
+  const [theme, setTheme] = useState<Theme>("light");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const saved = document.documentElement.getAttribute("data-theme") as Theme | null;
-    if (saved && themes.includes(saved)) {
-      setTheme(saved);
-    }
+    const saved = (localStorage.getItem("theme") as Theme) || "light";
+    setTheme(saved);
+    document.documentElement.setAttribute("data-theme", saved);
+    setMounted(true);
   }, []);
 
-  const switchTheme = () => {
-    const next = themes[(themes.indexOf(theme) + 1) % themes.length];
+  const cycle = () => {
+    const idx = THEME_ORDER.indexOf(theme);
+    const next = THEME_ORDER[(idx + 1) % THEME_ORDER.length];
     setTheme(next);
     document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("daydream-theme", next);
+    localStorage.setItem("theme", next);
   };
+
+  if (!mounted) {
+    return (
+      <button className="theme-toggle" aria-label="切换主题" disabled>
+        <span className="theme-toggle-icon" />
+      </button>
+    );
+  }
 
   return (
     <button
-      type="button"
       className="theme-toggle"
-      onClick={switchTheme}
-      aria-label={`切换风格，当前：${labels[theme]}`}
-      title={`当前主题：${labels[theme]}，点击切换`}
+      onClick={cycle}
+      aria-label={`当前：${THEME_LABELS[theme]}，点击切换`}
+      title={`主题：${THEME_LABELS[theme]}`}
     >
-      <span className="theme-toggle__label mono">换形象</span>
-      <span className="theme-toggle__name mono">{labels[theme]}</span>
+      <span className={`theme-toggle-icon theme-${theme}`} />
     </button>
   );
 }

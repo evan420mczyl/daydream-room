@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-const ITEMS = ["写字", "做手工", "晒太阳", "收集可爱", "偶尔写代码", "发很长的呆", "给玩偶拍照"];
+const ITEMS = ["写代码", "折腾 AI", "配置终端", "参加黑客松", "玩 Three.js", "收藏 VSCode 插件", "周末撸小工具"];
 const COLORS = ["#FF6A55", "#F0B23E", "#4C5BD6", "#47C49A", "#9B7EDE"];
 const DESKTOP_PIXELS_PER_SECOND = 42;
 const MOBILE_PIXELS_PER_SECOND = 34;

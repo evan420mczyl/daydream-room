@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { DollFace } from "./dolls";
-import { GITHUB_URL } from "@/lib/site";
 import ThemeToggle from "./ThemeToggle";
+import { GITHUB_URL } from "@/lib/site";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -21,7 +21,7 @@ export default function Header() {
       <div className="wrap">
         <Link className="brand" href="/" aria-label="回到首页">
           <DollFace />
-          白日梦陈列室
+          Evan 的游乐场
         </Link>
         <nav className="site-nav" aria-label="主导航">
           <a href="/#featured">主推</a>

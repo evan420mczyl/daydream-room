@@ -19,18 +19,6 @@ const csp =
 
 const nextConfig = {
   outputFileTracingRoot: import.meta.dirname,
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  turbopack: {},
-  webpack: (config, { isServer }) => {
-    // 确保 @ 路径别名在客户端和服务端都能正确解析
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      "@": import.meta.dirname,
-    };
-    return config;
-  },
   async headers() {
     const headers = [...baseHeaders];
     if (process.env.NODE_ENV === "production") {

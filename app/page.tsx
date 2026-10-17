@@ -23,21 +23,21 @@ export default function Home() {
         {/* ---------- Hero ---------- */}
         <section className="hero wrap">
           <div className="hero-meta mono">
-            <span>Daydream Room — Evan的个人博客</span>
-            <span>Vol.01 / 2026 夏</span>
+            <span>Evan's Playground — 个人博客</span>
+            <span>Vol.01 / 2026 秋</span>
           </div>
 
           <div className="hero-stage">
             <h1 className="hero-title" id="hero-title">
-              <span className="line">白日梦</span>
+              <span className="line">Evan 的</span>
               <span className="line line-2">
-                <HollowText text="陈列室" className="hollow-svg" />
+                <HollowText text="游乐场" className="hollow-svg" />
               </span>
             </h1>
             <HeroCanvas className="hero-canvas-wrap" />
 
             {/* 左下负空间的水印大字：让空白是设计，不是事故 */}
-            <span className="hero-watermark" aria-hidden="true">DAYDREAM</span>
+            <span className="hero-watermark" aria-hidden="true">PLAYGROUND</span>
 
             <HeroParallax />
 
@@ -54,10 +54,11 @@ export default function Home() {
 
           <div className="hero-bottom">
             <p className="hero-intro">
-              这里收留一些<strong>轻飘飘的念头</strong>：几页随笔、
-              <span className="no-break">一点设计、</span>
-              <span className="no-break">偶尔的手帐与代码。</span>
-              <span className="no-break">都写在<strong>架子上</strong>，</span>你慢慢逛。
+              这里是我折腾<strong>代码和 AI</strong> 的地方：
+              <span className="no-break">编程笔记、</span>
+              <span className="no-break">工具踩坑、</span>
+              <span className="no-break">和一些周末瞎做的小项目。</span>
+              <span className="no-break">欢迎<strong>随便逛</strong>，</span>看到好玩的点个 star。
             </p>
             <span className="scroll-hint mono">
               往下逛逛
@@ -73,7 +74,7 @@ export default function Home() {
           <Reveal>
             <div className="section-head">
               <h2>本周主推</h2>
-              <span className="mono">Featured — {featuredPost.title.slice(0, 20)}...</span>
+              <span className="mono">Featured — No.001</span>
             </div>
           </Reveal>
           <Reveal delay={120}>
@@ -85,14 +86,14 @@ export default function Home() {
                   {featuredPost.category} · {featuredPost.date} · 约 {featuredPost.minutes} 分钟
                 </p>
                 <h3 className="featured-title">
-                  {featuredPost.title}
+                  我的早晨仪式：和 AI <span className="hl hl-mustard">结对编程</span> 的第一小时
                 </h3>
                 <p className="featured-excerpt">{featuredPost.excerpt}</p>
                 <div className="featured-meta">
                   <Link className="btn" href={`/posts/${featuredPost.slug}`}>
                     开始阅读 <span className="arr">→</span>
                   </Link>
-                  <span className="mono">祝你读得慢一点</span>
+                  <span className="mono">祝你写得开心</span>
                 </div>
               </div>
               <div className="featured-stage" aria-hidden="true">
@@ -115,24 +116,26 @@ export default function Home() {
         <section id="about" className="wrap" style={{ marginTop: "var(--section-gap)" }}>
           <Reveal>
             <div className="section-head">
-              <h2>关于这间陈列室</h2>
-              <span className="mono">About — 陈列守则</span>
+              <h2>关于这个游乐场</h2>
+              <span className="mono">About — 玩家须知</span>
             </div>
           </Reveal>
           <div className="about-grid">
             <Reveal delay={100}>
               <p className="about-text">
-                我喜欢<span className="hl hl-coral">毛茸茸的玩偶</span>、
-                <span className="hl hl-indigo">留很多白的纸</span>， 和
-                <span className="hl hl-mint">不着急的心情</span>。
-                所以这个博客也一样：架子很大，东西不多，
-                每一件都值得<span className="hl hl-lilac">拿起来看一看</span>再放回去。
+                我是 <span className="hl hl-coral">Evan</span>，一个
+                <span className="hl hl-indigo">喜欢折腾 AI 编程的极客开发者</span>，
+                平时写代码、周末撸小工具、
+                偶尔参加黑客马拉松。
+                <span className="hl hl-mint">性格开朗，</span>
+                什么都想试一下。
+                <span className="hl hl-lilac">这里就是我的试验场。</span>
               </p>
             </Reveal>
             <Reveal delay={200}>
               <div className="about-side">
                 <div>
-                  <p className="mono" style={{ marginBottom: "1.1rem" }}>陈列室用色 — 只涂在小地方</p>
+                  <p className="mono" style={{ marginBottom: "1.1rem" }}>游乐场用色 — 只涂在小地方</p>
                   <div className="palette">
                     {[
                       ["#FF6A55", "珊瑚"],
@@ -149,7 +152,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div>
-                  <p className="mono" style={{ marginBottom: "1.1rem" }}>现任住员</p>
+                  <p className="mono" style={{ marginBottom: "1.1rem" }}>常驻嘉宾</p>
                   <div className="doll-shelf" aria-hidden="true">
                     <span className="d1 float-a"><DollBlob /></span>
                     <span className="d2 float-b"><DollStar /></span>

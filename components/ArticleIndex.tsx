@@ -8,7 +8,7 @@ export default function ArticleIndex() {
     <section id="posts" className="wrap" style={{ marginTop: "var(--section-gap)" }}>
       <Reveal>
         <div className="section-head">
-          <h2>架上的东西</h2>
+          <h2>写过的东西</h2>
           <span className="mono">Index — {String(allPosts.length).padStart(2, "0")} 篇</span>
         </div>
       </Reveal>
@@ -36,15 +36,6 @@ export default function ArticleIndex() {
                 </svg>
               </span>
             </Link>
-            {post.branches && (
-              <div className="post-branches">
-                {post.branches.map((branch, idx) => (
-                  <span key={idx} className="post-branch-tag">
-                    {branch}
-                  </span>
-                ))}
-              </div>
-            )}
           </Reveal>
         ))}
       </div>

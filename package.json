@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/evan420mczyl/daydream-room.git"
+    "url": "git+https://github.com/laogou717/daydream-room.git"
   },
   "scripts": {
     "dev": "next dev",

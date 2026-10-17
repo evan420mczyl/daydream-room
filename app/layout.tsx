@@ -14,7 +14,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — Evan的个人博客`,
+    default: `${SITE_NAME} · ${SITE_NAME_EN}`,
     template: `%s · ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -25,14 +25,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "zh_CN",
     url: "/",
-    siteName: `${SITE_NAME} — Evan的个人博客`,
-    title: `${SITE_NAME} — Evan的个人博客`,
+    siteName: `${SITE_NAME} · ${SITE_NAME_EN}`,
+    title: `${SITE_NAME} · ${SITE_NAME_EN}`,
     description: SITE_DESCRIPTION,
     images: [{ url: "/og.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_NAME} — Evan的个人博客`,
+    title: `${SITE_NAME} · ${SITE_NAME_EN}`,
     description: SITE_DESCRIPTION,
     images: ["/og.png"],
   },
@@ -42,7 +42,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     // suppressHydrationWarning：浏览器翻译类扩展（如 Trancy）会在 React 挂载前
     // 向 <html> 注入 trancy-version 等属性，导致 hydration 属性对比失败
-    <html lang="zh-CN" suppressHydrationWarning data-theme="original">
+    <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body>
         <InitialLoader />
         <div className="page-shell">{children}</div>

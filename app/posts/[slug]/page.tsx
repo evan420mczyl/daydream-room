@@ -9,7 +9,6 @@ import BackToTop from "@/components/BackToTop";
 import AsideObserver from "@/components/AsideObserver";
 import { DollStar, DollBlob, DollGhost, DollLong, DollCloud } from "@/components/dolls";
 import { allPosts, getPost, ACCENT_HEX, type Post } from "@/lib/posts";
-import ThemeToggle from "@/components/ThemeToggle";
 
 export function generateStaticParams() {
   return allPosts.map((p) => ({ slug: p.slug }));
@@ -47,7 +46,7 @@ function NavCard({ post, direction }: { post?: Post; direction: "prev" | "next" 
     return (
       <Link className={`nav-card nav-card--index ${direction}`} href="/#posts">
         <span className="mono">{direction === "prev" ? "← 到头啦" : "到头啦 →"}</span>
-        <span className="nav-title">回架上逛逛</span>
+        <span className="nav-title">回首页逛逛</span>
       </Link>
     );
   }
@@ -91,15 +90,15 @@ export default async function PostPage({
       <main className="post-accent" style={{ ["--accent" as string]: accent }}>
         <div className="wrap post-hero">
           <Link className="back-link" href="/#posts">
-            <span className="arr">←</span> 回陈列室
+            <span className="arr">←</span> 回游乐场
           </Link>
 
           <div className="post-layout">
             {/* 陪读侧栏：从标题高度开始，一路陪到送别 */}
             <aside className="post-aside">
               <dl className="aside-meta mono">
-                <div><dt>陈列位置</dt><dd>{post.category}</dd></div>
-                <div><dt>上架日期</dt><dd>{post.date}</dd></div>
+                <div><dt>分类</dt><dd>{post.category}</dd></div>
+                <div><dt>发布日期</dt><dd>{post.date}</dd></div>
                 <div><dt>阅读约需</dt><dd>{post.minutes} 分钟</dd></div>
               </dl>
               <div className="aside-doll" aria-hidden="true">
@@ -107,35 +106,20 @@ export default async function PostPage({
                   <HostDoll />
                 </span>
               </div>
-              <p className="aside-note mono">写在架子上 · No.{String(index + 1).padStart(3, "0")}</p>
+              <p className="aside-note mono">写在游乐场里 · No.{String(index + 1).padStart(3, "0")}</p>
             </aside>
 
             <div className="post-main">
               <Reveal>
                 <div className="post-head">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-                    <p className="kicker mono">
-                      <i className="dot" style={{ ["--dot" as string]: accent }} />
-                      {post.category} · {post.date} · 约 {post.minutes} 分钟
-                    </p>
-                    <ThemeToggle />
-                  </div>
+                  <p className="kicker mono">
+                    <i className="dot" style={{ ["--dot" as string]: accent }} />
+                    {post.category} · {post.date} · 约 {post.minutes} 分钟
+                  </p>
                   <h1 className="post-title">{post.title}</h1>
                   <p className="post-lead">{post.excerpt}</p>
                 </div>
               </Reveal>
-
-              {post.branches && post.branches.length > 0 && (
-                <Reveal delay={80}>
-                  <div className="post-branches" style={{ paddingLeft: 0, marginTop: "1.2rem" }}>
-                    {post.branches.map((branch, idx) => (
-                      <span key={idx} className="post-branch-tag">
-                        {branch}
-                      </span>
-                    ))}
-                  </div>
-                </Reveal>
-              )}
 
               <Reveal delay={100}>
                 <div className="article-body">
@@ -149,7 +133,7 @@ export default async function PostPage({
 
               <div className="post-end" aria-hidden="true">
                 <span className="star">✳</span>
-                <span className="mono">读完啦，喝口水吧</span>
+                <span className="mono">读完啦，去写点代码吧</span>
                 <span className="star">✳</span>
               </div>
 
