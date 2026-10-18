@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Evan 的游乐场 · 小方 3D 展台</title>
+<meta name="description" content="陶瓷 × 深色玻璃的小方块机器人「小方」：1400 颗星尘、双轨道环、真实光影，可自由旋转缩放的 WebGL 展台。" />
+
+<style>
+  /* ============ 基础 ============ */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root{
+    --bg:        #050609;
+    --text:      #f3f5fb;
+    --muted:     rgba(230, 236, 250, .60);
+    --muted-2:   rgba(230, 236, 250, .40);
+    --line:      rgba(255, 255, 255, .10);
+    --accent:    #7c9cff;
+    --accent-2:  #b98bff;
+    --accent-3:  #5ee6ff;
+
+    --glass-bg:  linear-gradient(150deg, rgba(255,255,255,.10), rgba(255,255,255,.028) 55%, rgba(255,255,255,.055));
+    --glass-brd: rgba(255,255,255,.13);
+  }
+
+  html, body { height: 100%; }
+
+  body{
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+                 "PingFang SC", "Helvetica Neue", "Microsoft YaHei", system-ui, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 820px at 12% -12%, rgba(96,126,255,.20), transparent 62%),
+      radial-gradient(1000px 760px at 88% 6%,  rgba(178,92,255,.17), transparent 62%),
+      radial-gradient(1100px 900px at 50% 122%, rgba(0,214,255,.10), transparent 64%),
+      var(--bg);
+    background-attachment: fixed;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition: background-color .5s ease;
+  }
+
+  /* 极细网格 */
+  .bg-grid{
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 30%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 30%, transparent 78%);
+  }
+
+  .page{
+    position: relative; z-index: 1;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: clamp(18px, 4vw, 40px) clamp(16px, 4vw, 44px) 34px;
+    display: flex; flex-direction: column; min-height: 100vh;
+  }
+
+  /* ============ 玻璃基元 ============ */
+  .glass{
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-brd);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 18px 44px -22px rgba(0,0,0,.66);
+  }
+
+  /* ============ 导航 ============ */
+  .nav{
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; margin-bottom: clamp(26px, 5vh, 54px);
+    animation: rise 1.05s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .brand{
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 10px 16px; border-radius: 999px;
+    font-weight: 700; font-size: 15px; letter-spacing: .02em;
+  }
+  .brand .mark{
+    width: 14px; height: 14px; border-radius: 4.5px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2) 55%, var(--accent-3));
+    box-shadow: 0 0 14px rgba(124,156,255,.8);
+  }
+
+  .nav-right{ display: flex; align-items: center; gap: 12px; }
+
+  /* 风格切换器：暗夜 / 玻璃 */
+  .theme-switch{
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px; border-radius: 999px;
+    background: rgba(255,255,255,.055);
+    border: 1px solid rgba(255,255,255,.12);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+  }
+  .theme-switch button{
+    appearance: none; border: 0; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 15px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 600; letter-spacing: .04em;
+    color: var(--muted);
+    background: transparent;
+    transition: color .25s ease, background .25s ease, box-shadow .25s ease;
+  }
+  .theme-switch button:hover{ color: var(--text); }
+  .theme-switch button[aria-pressed="true"]{
+    color: #fff;
+    background: linear-gradient(150deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 6px 18px -8px rgba(0,0,0,.6);
+  }
+  .theme-switch svg{ opacity: .9; }
+
+  .nav-gh{
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 42px; height: 42px; border-radius: 999px;
+    color: var(--text); text-decoration: none;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+  .nav-gh:hover{
+    transform: translateY(-2px);
+    border-color: rgba(255,255,255,.30);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 14px 34px -14px rgba(0,0,0,.8);
+  }
+
+  /* ============ 主区域 ============ */
+  .stage{
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: clamp(24px, 4vw, 52px);
+    align-items: center;
+    flex: 1;
+  }
+
+  .copy{ animation: rise 1.15s cubic-bezier(.2,.8,.2,1) .08s both; }
+
+  .badge{
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 7px 14px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 600; letter-spacing: .14em;
+    color: var(--muted); text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  .badge .pulse{
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #47c49a;
+    box-shadow: 0 0 10px 2px rgba(71,196,154,.75);
+    animation: pulseDot 2.2s ease-in-out infinite;
+  }
+  @keyframes pulseDot{
+    0%, 100% { transform: scale(1);   opacity: 1; }
+    50%      { transform: scale(1.35); opacity: .55; }
+  }
+
+  h1{
+    margin: 0 0 20px;
+    font-size: clamp(38px, 5vw, 62px);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -.015em;
+  }
+  h1 .thin{ font-weight: 300; }
+  .grad{
+    background: linear-gradient(100deg, var(--accent) 0%, var(--accent-2) 48%, var(--accent-3) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  .lede{
+    margin: 0 0 26px;
+    max-width: 52ch;
+    font-size: clamp(15px, 1.35vw, 17px);
+    line-height: 1.85;
+    color: var(--muted);
+  }
+  .lede b{ color: var(--text); font-weight: 600; }
+
+  /* 特性清单 */
+  .feats{
+    list-style: none; margin: 0 0 30px; padding: 0;
+    display: flex; flex-direction: column; gap: 11px;
+  }
+  .feats li{
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; letter-spacing: .03em; color: var(--muted);
+  }
+  .feats li i{
+    flex: none; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--c, var(--accent));
+    box-shadow: 0 0 12px 1px var(--c, var(--accent));
+  }
+  .feats li b{ color: var(--text); font-weight: 600; }
+
+  .actions{ display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 30px; }
+
+  .btn{
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 15px 26px; border-radius: 999px;
+    font-size: 15px; font-weight: 600; letter-spacing: .01em;
+    text-decoration: none; cursor: pointer;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+  .btn:active{ transform: translateY(1px) scale(.985); }
+
+  .btn-primary{
+    color: #0a0d17;
+    background: linear-gradient(135deg, #ffffff, #dfe6ff);
+    border: 1px solid rgba(255,255,255,.9);
+    box-shadow: 0 14px 38px -12px rgba(124,156,255,.55), inset 0 1px 0 #fff;
+  }
+  .btn-primary:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 20px 48px -12px rgba(124,156,255,.7), inset 0 1px 0 #fff;
+  }
+
+  .btn-ghost{
+    color: var(--text);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-brd);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+  }
+  .btn-ghost:hover{
+    transform: translateY(-2px);
+    border-color: rgba(255,255,255,.30);
+    box-shadow: 0 16px 36px -16px rgba(0,0,0,.8);
+  }
+
+  .stats{
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px; padding: 18px 8px; border-radius: 22px;
+    max-width: 430px;
+  }
+  .stat{ text-align: center; }
+  .stat b{
+    display: block;
+    font-size: clamp(20px, 2.2vw, 27px); font-weight: 800;
+    letter-spacing: -.01em;
+    background: linear-gradient(120deg, #fff, #b9c6ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .stat span{
+    display: block; margin-top: 5px;
+    font-size: 10.5px; letter-spacing: .16em;
+    color: var(--muted-2); text-transform: uppercase;
+  }
+
+  /* ============ 3D 画布 ============ */
+  .canvas-wrap{
+    position: relative;
+    height: clamp(400px, 74vh, 720px);
+    border-radius: 34px;
+    overflow: hidden;
+    isolation: isolate;
+    animation: rise 1.15s cubic-bezier(.2,.8,.2,1) .18s both;
+  }
+  .canvas-wrap::before{
+    content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(circle at 50% 44%, rgba(122,152,255,.20), transparent 60%),
+      radial-gradient(circle at 22% 88%, rgba(186,110,255,.16), transparent 58%);
+  }
+  #scene{
+    position: relative; z-index: 1;
+    display: block;
+    width: 100%; height: 100%;
+    touch-action: none;
+    cursor: grab;
+  }
+  #scene:active{ cursor: grabbing; }
+
+  .hint{
+    position: absolute; z-index: 3;
+    left: 50%; bottom: 18px;
+    transform: translateX(-50%);
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 11.5px; letter-spacing: .5px;
+    color: rgba(255,255,255,.65);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+  }
+  .hint svg{ opacity: .7; }
+
+  /* 角落标签 */
+  .corner-tag{
+    position: absolute; z-index: 3;
+    top: 16px; right: 16px;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    font-size: 10.5px; letter-spacing: 1.2px;
+    color: rgba(255,255,255,.55);
+    text-transform: uppercase;
+    pointer-events: none;
+    user-select: none;
+  }
+  .corner-tag::before{
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: #47c49a; box-shadow: 0 0 8px 1px rgba(71,196,154,.8);
+  }
+
+  /* ============ 页脚 ============ */
+  .foot{
+    margin-top: clamp(26px, 4vh, 44px);
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+    font-size: 11.5px; letter-spacing: .12em;
+    color: var(--muted-2);
+    animation: rise 1.15s cubic-bezier(.2,.8,.2,1) .28s both;
+  }
+
+  /* ============ 动效 ============ */
+  @keyframes rise{
+    from { opacity: 0; transform: translateY(26px) scale(.985); filter: blur(6px); }
+    to   { opacity: 1; transform: none; filter: blur(0); }
+  }
+
+  /* =========================================================
+     玻璃风（iOS 液态玻璃 · 极光暮色）
+     ========================================================= */
+  [data-theme="glass"]{
+    --bg:        #17112b;
+    --text:      #f6f4ff;
+    --muted:     rgba(242, 238, 255, .66);
+    --muted-2:   rgba(242, 238, 255, .42);
+    --line:      rgba(255, 255, 255, .16);
+    --accent:    #ffb46a;
+    --accent-2:  #ff8fb1;
+    --accent-3:  #7de3ff;
+
+    --glass-bg:  linear-gradient(150deg, rgba(255,255,255,.17), rgba(255,255,255,.05) 55%, rgba(255,255,255,.10));
+    --glass-brd: rgba(255,255,255,.34);
+  }
+
+  [data-theme="glass"] body{
+    background:
+      radial-gradient(950px 700px at 14% -8%,  rgba(255,106,85,.26), transparent 60%),
+      radial-gradient(880px 660px at 88% 4%,  rgba(76,91,214,.30), transparent 62%),
+      radial-gradient(900px 720px at 50% 118%, rgba(155,126,222,.24), transparent 64%),
+      radial-gradient(520px 420px at 78% 62%, rgba(71,196,154,.14), transparent 66%),
+      var(--bg);
+  }
+
+  /* 玻璃风：面板厚玻璃化 */
+  [data-theme="glass"] .glass,
+  [data-theme="glass"] .theme-switch,
+  [data-theme="glass"] .btn-ghost{
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-brd);
+    backdrop-filter: blur(30px) saturate(185%);
+    -webkit-backdrop-filter: blur(30px) saturate(185%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.45),
+      inset 0 -1px 0 rgba(255,255,255,.16),
+      0 22px 55px -20px rgba(10, 6, 34, .55);
+  }
+
+  [data-theme="glass"] .theme-switch button[aria-pressed="true"]{
+    background: linear-gradient(150deg, rgba(255,255,255,.30), rgba(255,255,255,.10));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 8px 22px -8px rgba(10,6,34,.6);
+  }
+
+  [data-theme="glass"] .btn-primary{
+    color: #1d1d1f;
+    background: linear-gradient(135deg, #ffffff, #ffe9d6);
+    border: 1px solid rgba(255,255,255,.95);
+    box-shadow: 0 16px 44px -12px rgba(255,180,106,.55), inset 0 1px 0 #fff;
+  }
+  [data-theme="glass"] .btn-primary:hover{
+    box-shadow: 0 22px 54px -12px rgba(255,180,106,.72), inset 0 1px 0 #fff;
+  }
+
+  [data-theme="glass"] .grad{
+    background: linear-gradient(100deg, #ffc98f 0%, #ff9fbe 46%, #7de3ff 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  [data-theme="glass"] .stat b{
+    background: linear-gradient(120deg, #fff, #ffd9b8);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  [data-theme="glass"] .bg-grid{ opacity: .5; }
+
+  [data-theme="glass"] .canvas-wrap::before{
+    background:
+      radial-gradient(circle at 50% 44%, rgba(255,180,106,.14), transparent 60%),
+      radial-gradient(circle at 22% 88%, rgba(125,227,255,.13), transparent 58%),
+      radial-gradient(circle at 80% 14%, rgba(255,143,177,.10), transparent 56%);
+  }
+
+  /* ============ 响应式 ============ */
+  @media (max-width: 980px){
+    .stage{
+      grid-template-columns: 1fr;
+      gap: 34px;
+      padding-top: 24px;
+    }
+    .canvas-wrap{ height: min(58vh, 460px); order: -1; }
+    .copy{ max-width: 100%; }
+    h1{ font-size: clamp(34px, 8vw, 52px); }
+    .lede{ max-width: 100%; }
+    .stats{ max-width: 100%; }
+  }
+  @media (max-width: 620px){
+    .page{ padding: 16px 16px 22px; }
+    .btn{ padding: 14px 22px; font-size: 14px; }
+    .canvas-wrap{ border-radius: 26px; }
+    .theme-switch button span{ display: none; }
+    .theme-switch button{ padding: 9px 12px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <div class="page">
+
+    <!-- ===== 导航 ===== -->
+    <header class="nav">
+      <div class="brand glass">
+        <div class="mark"></div>
+        <span>Evan</span>
+      </div>
+
+      <div class="nav-right">
+        <!-- 风格切换：暗夜 / 玻璃 -->
+        <div class="theme-switch" role="group" aria-label="风格切换">
+          <button type="button" id="btnDark" aria-pressed="true" title="风格：暗夜（深色）">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <span>暗夜</span>
+          </button>
+          <button type="button" id="btnGlass" aria-pressed="false" title="风格：透明玻璃（iOS 风）">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/>
+            </svg>
+            <span>玻璃</span>
+          </button>
+        </div>
+
+        <!-- ✅ GitHub 按钮指向 https://github.com/Evan-420 -->
+        <a class="nav-gh glass" href="https://github.com/Evan-420" target="_blank" rel="noopener noreferrer" aria-label="前往 Evan-420 的 GitHub">
+          <svg viewBox="0 0 16 16" width="19" height="19" fill="currentColor" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- ===== 主区域 ===== -->
+    <main class="stage">
+
+      <!-- 文案 -->
+      <section class="copy">
+        <div class="badge glass">
+          <span class="pulse"></span>
+          Resident No.002 · 小方已入住
+        </div>
+
+        <h1>
+          把界面做成<span class="grad">玻璃</span>，<br />
+          <span class="thin">把想法做成</span><span class="grad">玩具</span>。
+        </h1>
+
+        <p class="lede">
+          游乐场的新住客「小方」：一只<b>陶瓷与深色玻璃</b>拼成的小方块机器人。
+          眼睛是不眨的星子，天线顶着粉色信号灯；两圈金属轨道环、七颗巡游的彩色小方块，
+          外加 <b>1400 颗星尘</b>绕着它慢慢飘。每一个像素，都该有它自己的重量。
+        </p>
+
+        <ul class="feats">
+          <li><i style="--c:#FF6A55"></i><b>陶瓷 × 深色玻璃</b> · 清漆高光与真实反射</li>
+          <li><i style="--c:#F0B23E"></i><b>星尘粒子</b> · 1400 颗环绕漂浮 + 近景尘埃</li>
+          <li><i style="--c:#47C49A"></i><b>自由视角</b> · 拖拽旋转 / 滚轮缩放</li>
+        </ul>
+
+        <div class="actions">
+          <!-- ✅ GitHub 按钮已指向 https://github.com/Evan-420 -->
+          <a class="btn btn-primary"
+             href="https://github.com/Evan-420"
+             target="_blank" rel="noopener noreferrer"
+             aria-label="前往 Evan-420 的 GitHub">
+            <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+            <span>GitHub</span>
+          </a>
+
+          <a class="btn btn-ghost" href="https://github.com/evan420mczyl/daydream-room" target="_blank" rel="noopener noreferrer">
+            去游乐场逛逛 <span aria-hidden="true">→</span>
+          </a>
+        </div>
+
+        <div class="stats glass">
+          <div class="stat"><b>1400</b><span>星尘</span></div>
+          <div class="stat"><b>2</b><span>轨道环</span></div>
+          <div class="stat"><b>∞</b><span>视角</span></div>
+        </div>
+      </section>
+
+      <!-- 3D 舞台 -->
+      <section class="canvas-wrap">
+        <canvas id="scene"></canvas>
+        <div class="corner-tag glass">3D · LIVE</div>
+        <div class="hint glass">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+          拖拽旋转 · 滚轮缩放
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="foot">
+      <span>EVAN'S PLAYGROUND · 玩偶屋 · 3D</span>
+      <span>WEBGL · THREE.JS 实时渲染 · 非视频</span>
+    </footer>
+
+  </div>
+
+  <!-- ===== 风格切换 ===== -->
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var btnDark = document.getElementById('btnDark');
+      var btnGlass = document.getElementById('btnGlass');
+
+      function setTheme(kind) {
+        root.setAttribute('data-theme', kind);
+        btnDark.setAttribute('aria-pressed', String(kind === 'dark'));
+        btnGlass.setAttribute('aria-pressed', String(kind === 'glass'));
+        try { localStorage.setItem('toy-theme', kind); } catch (e) {}
+        // 通知 3D 场景微调光影
+        window.dispatchEvent(new CustomEvent('toy-theme', { detail: kind }));
+      }
+
+      btnDark.addEventListener('click', function () { setTheme('dark'); });
+      btnGlass.addEventListener('click', function () { setTheme('glass'); });
+
+      // 首帧恢复上次的选择（默认暗夜）
+      var saved = null;
+      try { saved = localStorage.getItem('toy-theme'); } catch (e) {}
+      if (saved === 'glass' || saved === 'dark') setTheme(saved);
+      else setTheme('dark');
+    })();
+  </script>
+
+  <!-- ===== Three.js ===== -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.164.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.164.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+  import * as THREE from 'three';
+  import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+  import { OrbitControls }     from 'three/addons/controls/OrbitControls.js';
+  import { RoomEnvironment }   from 'three/addons/environments/RoomEnvironment.js';
+
+  /* =========================================================
+     0. 渲染器 / 场景 / 相机
+     ========================================================= */
+  const canvas   = document.querySelector('#scene');
+  const wrapEl   = document.querySelector('.canvas-wrap');
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    alpha: true,
+    powerPreference: 'high-performance'
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping         = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+  renderer.shadowMap.enabled   = true;
+  renderer.shadowMap.type      = THREE.PCFSoftShadowMap;
+
+  const scene  = new THREE.Scene();
+
+  const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 120);
+  camera.position.set(1.6, 1.9, 8.6);
+
+  /* 环境光照（IBL）—— 玻璃与金属反射的来源 */
+  const pmrem  = new THREE.PMREMGenerator(renderer);
+  const envTex = pmrem.fromScene(new RoomEnvironment(), 0.05).texture;
+  scene.environment = envTex;
+  pmrem.dispose();
+
+  /* =========================================================
+     1. 灯光 —— 真实光影
+     ========================================================= */
+  const keyLight = new THREE.DirectionalLight(0xffffff, 3.1);
+  keyLight.position.set(5.5, 8.5, 6.5);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.set(2048, 2048);
+  keyLight.shadow.camera.near   = 1;
+  keyLight.shadow.camera.far    = 32;
+  keyLight.shadow.camera.left   = -6;
+  keyLight.shadow.camera.right  = 6;
+  keyLight.shadow.camera.top    = 6;
+  keyLight.shadow.camera.bottom = -6;
+  keyLight.shadow.bias       = -0.0006;
+  keyLight.shadow.normalBias = 0.022;
+  keyLight.shadow.radius     = 3;
+  scene.add(keyLight);
+
+  const rimPurple = new THREE.PointLight(0x8b5cf6, 90, 26, 2);
+  rimPurple.position.set(-5.2, 2.6, -4.2);
+  scene.add(rimPurple);
+
+  const rimCyan = new THREE.PointLight(0x22d3ee, 65, 26, 2);
+  rimCyan.position.set(5.0, -2.2, -3.4);
+  scene.add(rimCyan);
+
+  const warmFill = new THREE.PointLight(0xffd7a6, 26, 22, 2);
+  warmFill.position.set(-3.4, -4.0, 5.0);
+  scene.add(warmFill);
+
+  /* =========================================================
+     2. 3D 玩具组件 —— 小方（陶瓷 × 深色玻璃的小方块机器人）
+     ========================================================= */
+  const toy = new THREE.Group();
+  scene.add(toy);
+
+  /* ---------- 材质 ---------- */
+  const matCeramic = new THREE.MeshPhysicalMaterial({
+    color: 0xf4f7ff,
+    metalness: 0.18,
+    roughness: 0.16,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.055,
+    reflectivity: 1.0,
+    envMapIntensity: 1.55
+  });
+
+  const matDarkGlass = new THREE.MeshPhysicalMaterial({
+    color: 0x0a0d17,
+    metalness: 0.85,
+    roughness: 0.055,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.02,
+    envMapIntensity: 2.3
+  });
+
+  const matEye = new THREE.MeshStandardMaterial({
+    color: 0x0a1220,
+    emissive: 0x7de3ff,
+    emissiveIntensity: 2.4,
+    roughness: 0.15,
+    metalness: 0.05,
+    toneMapped: false
+  });
+
+  const matKnob = new THREE.MeshPhysicalMaterial({
+    color: 0x8b7cff,
+    metalness: 0.95,
+    roughness: 0.22,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.05,
+    envMapIntensity: 1.8
+  });
+
+  const matChrome = new THREE.MeshStandardMaterial({
+    color: 0xdfe6ff,
+    metalness: 1.0,
+    roughness: 0.22,
+    envMapIntensity: 1.8
+  });
+
+  const matAntennaBall = new THREE.MeshStandardMaterial({
+    color: 0x120818,
+    emissive: 0xff6ad5,
+    emissiveIntensity: 2.8,
+    roughness: 0.25,
+    toneMapped: false
+  });
+
+  const matRing = new THREE.MeshPhysicalMaterial({
+    color: 0x9aa8ff,
+    metalness: 1.0,
+    roughness: 0.16,
+    emissive: 0x2a3dff,
+    emissiveIntensity: 0.35,
+    envMapIntensity: 2.0
+  });
+
+  const matRingCyan = new THREE.MeshPhysicalMaterial({
+    color: 0x5ee6ff,
+    metalness: 0.9,
+    roughness: 0.14,
+    emissive: 0x1a9fbf,
+    emissiveIntensity: 0.7,
+    envMapIntensity: 2.0
+  });
+
+  /* ---------- 身体 ---------- */
+  const body = new THREE.Mesh(
+    new RoundedBoxGeometry(1.8, 1.8, 1.8, 12, 0.58),
+    matCeramic
+  );
+  body.castShadow = true;
+  body.receiveShadow = true;
+  toy.add(body);
+
+  /* ---------- 面罩 ---------- */
+  const face = new THREE.Mesh(
+    new RoundedBoxGeometry(1.24, 0.74, 0.30, 8, 0.24),
+    matDarkGlass
+  );
+  face.position.set(0, 0.06, 0.76);
+  face.castShadow = true;
+  toy.add(face);
+
+  /* ---------- 眼睛 ---------- */
+  const eyeGeo = new THREE.SphereGeometry(0.105, 40, 40);
+  const eyeL = new THREE.Mesh(eyeGeo, matEye);
+  eyeL.position.set(-0.28, 0.06, 0.915);
+  eyeL.scale.set(1, 1, 0.6);
+  toy.add(eyeL);
+
+  const eyeR = new THREE.Mesh(eyeGeo, matEye);
+  eyeR.position.set(0.28, 0.06, 0.915);
+  eyeR.scale.set(1, 1, 0.6);
+  toy.add(eyeR);
+
+  /* 眼睛辉光（Sprite） */
+  function glowSprite(color, size, opacity){
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const g = c.getContext('2d');
+    const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grd.addColorStop(0,    color + '1)');
+    grd.addColorStop(0.35, color + '0.45)');
+    grd.addColorStop(1,    color + '0)');
+    g.fillStyle = grd;
+    g.fillRect(0, 0, 128, 128);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const mat = new THREE.SpriteMaterial({
+      map: tex,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      opacity
+    });
+    const sp = new THREE.Sprite(mat);
+    sp.scale.set(size, size, 1);
+    return sp;
+  }
+
+  const glowL = glowSprite('rgba(125,227,255,', 0.62, 0.85);
+  glowL.position.set(-0.28, 0.06, 0.95);
+  toy.add(glowL);
+
+  const glowR = glowSprite('rgba(125,227,255,', 0.62, 0.85);
+  glowR.position.set(0.28, 0.06, 0.95);
+  toy.add(glowR);
+
+  /* ---------- 侧面旋钮 ---------- */
+  const knobGeo = new THREE.SphereGeometry(0.19, 36, 36);
+  const knobL = new THREE.Mesh(knobGeo, matKnob);
+  knobL.position.set(-0.905, -0.05, 0);
+  knobL.castShadow = true;
+  toy.add(knobL);
+
+  const knobR = new THREE.Mesh(knobGeo, matKnob);
+  knobR.position.set(0.905, -0.05, 0);
+  knobR.castShadow = true;
+  toy.add(knobR);
+
+  /* ---------- 天线 ---------- */
+  const antennaPole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.035, 0.035, 0.34, 20),
+    matChrome
+  );
+  antennaPole.position.set(0, 1.06, 0);
+  antennaPole.castShadow = true;
+  toy.add(antennaPole);
+
+  const antennaBall = new THREE.Mesh(
+    new THREE.SphereGeometry(0.112, 36, 36),
+    matAntennaBall
+  );
+  antennaBall.position.set(0, 1.28, 0);
+  toy.add(antennaBall);
+
+  const antennaGlow = glowSprite('rgba(255,106,213,', 0.9, 0.8);
+  antennaGlow.position.set(0, 1.28, 0);
+  toy.add(antennaGlow);
+
+  /* ---------- 环绕轨道环 ---------- */
+  const ringGroup = new THREE.Group();
+  ringGroup.rotation.set(1.28, 0.22, 0.42);
+  toy.add(ringGroup);
+
+  const ring1 = new THREE.Mesh(
+    new THREE.TorusGeometry(2.18, 0.028, 18, 240),
+    matRing
+  );
+  ring1.castShadow = true;
+  ringGroup.add(ring1);
+
+  const ring2 = new THREE.Mesh(
+    new THREE.TorusGeometry(2.46, 0.016, 14, 220),
+    matRingCyan
+  );
+  ring2.rotation.set(0.55, 0.9, 0.2);
+  ringGroup.add(ring2);
+
+  /* ---------- 环绕漂浮小方块 ---------- */
+  const orbs = [];
+  const orbGeo = new RoundedBoxGeometry(0.13, 0.13, 0.13, 3, 0.045);
+  for (let i = 0; i < 7; i++){
+    const m = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color().setHSL(0.58 + i * 0.045, 0.85, 0.72),
+      metalness: 0.55,
+      roughness: 0.2,
+      clearcoat: 1,
+      emissive: new THREE.Color().setHSL(0.6 + i * 0.04, 0.9, 0.35),
+      emissiveIntensity: 0.6,
+      envMapIntensity: 1.6
+    });
+    const o = new THREE.Mesh(orbGeo, m);
+    o.castShadow = true;
+    o.userData = {
+      radius: 2.55 + Math.random() * 0.7,
+      speed:  0.28 + Math.random() * 0.4,
+      phase:  Math.random() * Math.PI * 2,
+      tilt:   (Math.random() - 0.5) * 1.5,
+      yOff:   (Math.random() - 0.5) * 1.6
+    };
+    toy.add(o);
+    orbs.push(o);
+  }
+
+  /* =========================================================
+     3. 粒子系统
+     ========================================================= */
+  function makeParticleTexture(){
+    const c = document.createElement('canvas');
+    c.width = c.height = 96;
+    const g = c.getContext('2d');
+    const grd = g.createRadialGradient(48, 48, 0, 48, 48, 48);
+    grd.addColorStop(0,    'rgba(255,255,255,1)');
+    grd.addColorStop(0.28, 'rgba(190,215,255,0.62)');
+    grd.addColorStop(0.62, 'rgba(130,170,255,0.18)');
+    grd.addColorStop(1,    'rgba(110,150,255,0)');
+    g.fillStyle = grd;
+    g.fillRect(0, 0, 96, 96);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  const P_COUNT = 1400;
+  const pPos   = new Float32Array(P_COUNT * 3);
+  const pCol   = new Float32Array(P_COUNT * 3);
+  const pScale = new Float32Array(P_COUNT);
+
+  const cA = new THREE.Color(0x9db8ff);
+  const cB = new THREE.Color(0xc79dff);
+  const cC = new THREE.Color(0x7df0ff);
+
+  for (let i = 0; i < P_COUNT; i++){
+    const r     = 3.0 + Math.pow(Math.random(), 0.7) * 5.6;
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2 * Math.random() - 1);
+
+    pPos[i * 3 + 0] = r * Math.sin(phi) * Math.cos(theta);
+    pPos[i * 3 + 1] = r * Math.cos(phi) * 0.55 + (Math.random() - 0.5) * 1.2;
+    pPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+    const mix = Math.random();
+    const col = mix < 0.45 ? cA : (mix < 0.82 ? cB : cC);
+    const dim = 0.45 + Math.random() * 0.55;
+    pCol[i * 3 + 0] = col.r * dim;
+    pCol[i * 3 + 1] = col.g * dim;
+    pCol[i * 3 + 2] = col.b * dim;
+
+    pScale[i] = 0.5 + Math.random() * 1.6;
+  }
+
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  pGeo.setAttribute('color',    new THREE.BufferAttribute(pCol, 3));
+  pGeo.setAttribute('aScale',   new THREE.BufferAttribute(pScale, 1));
+
+  const pMat = new THREE.PointsMaterial({
+    size: 0.075,
+    map: makeParticleTexture(),
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.92,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true
+  });
+
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  /* 近景尘埃（更亮更少） */
+  const D_COUNT = 260;
+  const dPos = new Float32Array(D_COUNT * 3);
+  for (let i = 0; i < D_COUNT; i++){
+    dPos[i * 3 + 0] = (Math.random() - 0.5) * 9;
+    dPos[i * 3 + 1] = (Math.random() - 0.5) * 7;
+    dPos[i * 3 + 2] = (Math.random() - 0.5) * 6 + 1;
+  }
+  const dGeo = new THREE.BufferGeometry();
+  dGeo.setAttribute('position', new THREE.BufferAttribute(dPos, 3));
+
+  const dust = new THREE.Points(dGeo, new THREE.PointsMaterial({
+    size: 0.045,
+    map: makeParticleTexture(),
+    color: 0xbcd0ff,
+    transparent: true,
+    opacity: 0.55,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true
+  }));
+  scene.add(dust);
+
+  /* =========================================================
+     4. 阴影承接面
+     ========================================================= */
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(34, 34),
+    new THREE.ShadowMaterial({ color: 0x000000, opacity: 0.55 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -2.35;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  /* =========================================================
+     5. 控制器 —— 可自由调整角度
+     ========================================================= */
+  const controls = new OrbitControls(camera, canvas);
+  controls.target.set(0, 0.08, 0);
+  controls.enableDamping   = true;
+  controls.dampingFactor   = 0.065;
+  controls.enablePan       = false;
+  controls.minDistance     = 4.6;
+  controls.maxDistance     = 12.5;
+  controls.minPolarAngle   = 0.32;
+  controls.maxPolarAngle   = Math.PI * 0.68;
+  controls.rotateSpeed     = 0.85;
+  controls.zoomSpeed       = 0.8;
+  controls.autoRotate      = true;
+  controls.autoRotateSpeed = 0.75;
+
+  let idleTimer = null;
+  controls.addEventListener('start', () => {
+    controls.autoRotate = false;
+    clearTimeout(idleTimer);
+  });
+  controls.addEventListener('end', () => {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => { controls.autoRotate = true; }, 2600);
+  });
+
+  /* =========================================================
+     6. 尺寸自适应
+     ========================================================= */
+  function resize(){
+    const w = wrapEl.clientWidth  || 1;
+    const h = wrapEl.clientHeight || 1;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(wrapEl);
+  window.addEventListener('resize', resize);
+  resize();
+
+  /* =========================================================
+     7. 主题联动：玻璃风下稍微提亮轮廓光
+     ========================================================= */
+  window.addEventListener('toy-theme', (e) => {
+    if (e.detail === 'glass'){
+      renderer.toneMappingExposure = 1.17;
+      rimPurple.intensity = 102;
+      rimCyan.intensity   = 74;
+      warmFill.intensity  = 30;
+    } else {
+      renderer.toneMappingExposure = 1.12;
+      rimPurple.intensity = 90;
+      rimCyan.intensity   = 65;
+      warmFill.intensity  = 26;
+    }
+  });
+
+  /* =========================================================
+     8. 动画循环
+     ========================================================= */
+  const clock = new THREE.Clock();
+  let elapsed = 0;
+
+  function tick(){
+    requestAnimationFrame(tick);
+
+    const dt = Math.min(clock.getDelta(), 0.05);
+    elapsed += dt;
+
+    /* —— 玩具漂浮 —— */
+    toy.position.y = Math.sin(elapsed * 1.05) * 0.085;
+    toy.rotation.y = Math.sin(elapsed * 0.40) * 0.20;
+    toy.rotation.z = Math.sin(elapsed * 0.62) * 0.032;
+    toy.rotation.x = Math.sin(elapsed * 0.33) * 0.05;
+
+    /* —— 呼吸灯 —— */
+    const pulse = 2.2 + Math.sin(elapsed * 2.3) * 0.65;
+    matEye.emissiveIntensity = pulse;
+    glowL.material.opacity = 0.62 + Math.sin(elapsed * 2.3) * 0.22;
+    glowR.material.opacity = 0.62 + Math.sin(elapsed * 2.3) * 0.22;
+
+    matAntennaBall.emissiveIntensity = 2.4 + Math.sin(elapsed * 1.7 + 1.2) * 1.0;
+    antennaGlow.material.opacity = 0.55 + Math.sin(elapsed * 1.7 + 1.2) * 0.3;
+
+    /* —— 轨道环自转 —— */
+    ringGroup.rotation.y = 0.22 + elapsed * 0.30;
+    ring2.rotation.z = 0.2 + elapsed * 0.18;
+
+    /* —— 漂浮小方块 —— */
+    for (let i = 0; i < orbs.length; i++){
+      const o = orbs[i];
+      const d = o.userData;
+      const a = d.phase + elapsed * d.speed;
+      o.position.set(
+        Math.cos(a) * d.radius,
+        d.yOff + Math.sin(a * 1.6 + d.phase) * 0.35,
+        Math.sin(a) * d.radius * 0.9
+      );
+      o.rotation.x = a * 1.4;
+      o.rotation.y = a * 1.1;
+      o.rotation.z = a * 0.7;
+    }
+
+    /* —— 粒子 —— */
+    particles.rotation.y = elapsed * 0.026;
+    particles.rotation.x = Math.sin(elapsed * 0.12) * 0.05;
+
+    dust.rotation.y = -elapsed * 0.045;
+    dust.position.y = Math.sin(elapsed * 0.35) * 0.16;
+
+    /* —— 轮廓光缓慢游走 —— */
+    rimPurple.position.x = -5.2 + Math.sin(elapsed * 0.42) * 1.4;
+    rimCyan.position.x    =  5.0 + Math.cos(elapsed * 0.36) * 1.4;
+
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  tick();
+  </script>
+</body>
+</html>

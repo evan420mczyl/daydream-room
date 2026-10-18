@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// 「凭密码编辑文章」安全子系统
+// 原则：fail-closed（控制失效默认拒绝）、最小权限（令牌只解锁
+// 单篇文章的编辑作用域）、不信任客户端标识符（每次保存都做
+// 对象级授权）。
+// ============================================================
+
+// 文章编辑覆盖层：保存后的内容覆盖静态原文（src/lib/posts.ts）。
+// blocks 是结构化纯文本（p/h2/quote）的 JSON 序列化，不含 HTML，
+// 输出经 React 文本节点自动转义 —— 等价于 allow-list sanitizer。
+model PostEdit {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  excerpt   String
+  minutes   Int
+  blocks    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 全站编辑密码（单一口令面）。只存 Argon2id 慢哈希 + 独立盐，
+// 绝不明文、绝不用快速哈希。校验失败与配置缺失一律 fail-closed。
+model EditSetting {
+  id           String   @id @default("global")
+  passwordHash String
+  algo         String   @default("argon2id")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// 短时效编辑令牌：只存 SHA-256 哈希（数据库泄露也无法重放）；
+// 绑定 slug 与 "edit" 作用域（一个令牌绝不能编辑另一篇文章）；
+// 绝对 TTL 30 分钟 + 空闲超时 15 分钟；保存成功即消费旧令牌并
+// 旋转签发新令牌；改密码 / 主动锁定时全量吊销。
+model EditToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  csrfHash   String
+  slug       String
+  scope      String    @default("edit")
+  issuedAt   DateTime  @default(now())
+  expiresAt  DateTime
+  lastUsedAt DateTime?
+  consumedAt DateTime?
+  revoked    Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+}
+
+// 安全审计日志：记录解锁尝试、保存、令牌生命周期、密码变更。
+// 绝不写入密码明文/哈希、令牌或 CSRF 明文 —— 只允许事件名、slug、
+// IP 与白名单化的原因码 / 令牌哈希前缀。
+model AuditLog {
+  id        String   @id @default(cuid())
+  event     String
+  slug      String?
+  ip        String?
+  detail    String?
+  createdAt DateTime @default(now())
+}
